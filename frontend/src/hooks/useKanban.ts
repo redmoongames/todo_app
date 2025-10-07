@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Column, Task } from '@/types';
 import { apiService } from '@/services/api';
 import { apiTaskToTask, createTaskToApiTask } from '@/utils/dataTransform';
+import { useWebSocket } from './useWebSocket';
 
 const initialColumns: Column[] = [
   { id: 'todo', title: 'To Do', order: 0 },
@@ -19,6 +20,31 @@ export function useKanban() {
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [error, setError] = useState<string>('');
   const [nextTaskId, setNextTaskId] = useState(1);
+
+  const handleWebSocketMessage = useCallback((message: any) => {
+    switch (message.type) {
+      case 'task_create':
+        const newTask = apiTaskToTask(message.data);
+        setTasks(prevTasks => [...prevTasks, newTask]);
+        break;
+      case 'task_update':
+        const updatedTask = apiTaskToTask(message.data);
+        setTasks(prevTasks =>
+          prevTasks.map(task =>
+            task.id === updatedTask.id ? updatedTask : task
+          )
+        );
+        break;
+      case 'task_delete':
+        setTasks(prevTasks =>
+          prevTasks.filter(task => task.id !== message.data.task_id)
+        );
+        break;
+    }
+  }, []);
+
+  const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000/ws';
+  useWebSocket(wsUrl, handleWebSocketMessage);
 
   const loadTasks = async () => {
     try {
