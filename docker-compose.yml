@@ -21,5 +21,6 @@ services:
       - /app/.next
     environment:
       - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://83.166.247.196:8000/api/v1
     depends_on:
       - backend

@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'http://83.166.247.196:8000/api/v1'
+  : 'http://localhost:8000/api/v1';
 
 export interface TaskData {
   id: number;
